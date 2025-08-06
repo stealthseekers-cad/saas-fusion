@@ -1,0 +1,24 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# Define the list of origins that are allowed to make requests.
+# We are allowing our frontend's address.
+origins = [
+    "http://localhost:5173",
+]
+
+# Add the CORS middleware to our FastAPI application.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}

@@ -1,0 +1,40 @@
+services:
+  backend:
+    build: ./backend
+    container_name: stealth-seekers-backend
+    env_file: ./.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    container_name: stealth-seekers-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app/frontend
+    networks:
+      - app-network
+
+  db:
+    image: postgres:15
+    container_name: stealth-seekers-db
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=app_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
