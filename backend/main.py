@@ -100,3 +100,4 @@ async def analyze_problem(problem: Problem, db: Session = Depends(get_db)):
     except Exception as e:
         print(f"An error occurred: {e}")
         raise HTTPException(status_code=500, detail=f"An error occurred during AI analysis: {str(e)}")
+# Test commit for Cloud Build trigger

@@ -1,0 +1,18 @@
+# This file defines the steps for Cloud Build to execute.
+steps:
+  # This step tells Cloud Build to use the standard Docker builder.
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-t',
+      'us-central1-docker.pkg.dev/ai-architect-saas/my-api-service/api:latest',
+      './backend'  # This tells Docker to find the Dockerfile inside the 'backend' folder.
+    ]
+
+# This lists the final image to be pushed to Artifact Registry upon success.
+images:
+  - 'us-central1-docker.pkg.dev/ai-architect-saas/my-api-service/api:latest'
+
+# This option block is the fix for the error you received.
+options:
+  logging: CLOUD_LOGGING_ONLY
