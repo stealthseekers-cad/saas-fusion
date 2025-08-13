@@ -1,23 +1,17 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim
-
-# Set the working directory in the container
-WORKDIR /app/backend
-
-# Copy the requirements file into the container
+# --- Stage 1: Builder ---
+FROM python:3.11-slim as builder
+WORKDIR /app
 COPY requirements.txt .
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application's code into the container
+# --- Stage 2: Final Image ---
+FROM python:3.11-slim
+WORKDIR /app
+RUN useradd --create-home appuser
+USER appuser
+COPY --from=builder /wheels /wheels
+COPY --from=builder /app/requirements.txt .
+RUN pip install --no-cache-dir /wheels/*
 COPY . .
-
-# Make port 8000 available to the world outside this container
-EXPOSE 8000
-
-# Define environment variable
-ENV NAME World
-
-# Run main.py when the container launches
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+EXPOSE 8080
+CMD ["gunicorn", "--workers", "3", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8080", "main:app"]
