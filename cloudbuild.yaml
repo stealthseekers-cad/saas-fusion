@@ -1,11 +1,83 @@
+# This is the Cloud Build configuration file for our CI (Continuous Integration) pipeline.
+# It defines the steps to lint, test, build, and push our Docker image.
+
 steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args:
-  - 'build'
-  - '-t'
-  - 'us-central1-docker.pkg.dev/ai-architect-saas/my-api-service/api:latest'
-  - './backend'
+  # Step 1: Install Python dependencies
+  # We use a standard Python image to create a virtual environment and install our packages.
+  # This caches the dependencies for subsequent steps.
+  - name: 'python:3.11-slim'
+    id: 'Install Dependencies'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        python -m venv /workspace/venv
+        . /workspace/venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+  # Step 2: Lint with Black
+  # Run the Black code formatter in check mode. If any file needs reformatting,
+  # this step will fail the build, enforcing a consistent code style.
+  - name: 'python:3.11-slim'
+    id: 'Lint with Black'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        . /workspace/venv/bin/activate
+        black . --check
+
+  # Step 3: Lint with Flake8
+  # Run Flake8 to check for style guide violations (PEP 8) and other common errors.
+  # This step will also fail the build if issues are found.
+  - name: 'python:3.11-slim'
+    id: 'Lint with Flake8'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        . /workspace/venv/bin/activate
+        flake8 .
+
+  # Step 4: Run Unit & Integration Tests with Pytest
+  # Execute our test suite. A failing test is a critical error, so this will
+  # immediately stop the build. This is our primary quality gate.
+  - name: 'python:3.11-slim'
+    id: 'Run Tests'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        . /workspace/venv/bin/activate
+        pytest
+
+  # Step 5: Build the Docker Image
+  # If all previous steps passed, we build our application container.
+  # The image will be tagged with the short git commit SHA for versioning.
+  # $_GCP_PROJECT, $_GCP_REGION, and $_ARTIFACT_REPO are substitution variables
+  # that we will configure in the Cloud Build trigger.
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Build Docker Image'
+    args:
+      - 'build'
+      - '-t'
+      - '${_GCP_REGION}-docker.pkg.dev/${_GCP_PROJECT}/${_ARTIFACT_REPO}/flux-api:$SHORT_SHA'
+      - '.'
+
+  # Step 6: Push the Docker Image to Artifact Registry
+  # The validated, tested, and built image is pushed to our private registry.
+  # This image is now the immutable artifact we will use for deployment.
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push Docker Image'
+    args:
+      - 'push'
+      - '${_GCP_REGION}-docker.pkg.dev/${_GCP_PROJECT}/${_ARTIFACT_REPO}/flux-api:$SHORT_SHA'
+
+# This specifies the final image that was built and pushed.
+# This can be used by other parts of the GCP ecosystem.
 images:
-- 'us-central1-docker.pkg.dev/ai-architect-saas/my-api-service/api:latest'
-options:
-  logging: CLOUD_LOGGING_ONLY
+  - '${_GCP_REGION}-docker.pkg.dev/${_GCP_PROJECT}/${_ARTIFACT_REPO}/flux-api:$SHORT_SHA'
+
+# Increase the default timeout to 15 minutes to allow for dependency installation and tests.
+timeout: '900s'
