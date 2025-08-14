@@ -3,10 +3,10 @@
 
 steps:
   # Step 1: Install Python dependencies
-  # We specify `dir: 'backend'` to run this command inside the backend subdirectory.
+  # We install both app dependencies from requirements.txt and dev tools like black, flake8, and pytest.
   - name: 'python:3.11-slim'
     id: 'Install Dependencies'
-    dir: 'backend' # <--- ADDED: Change working directory
+    dir: 'backend'
     entrypoint: 'bash'
     args:
       - '-c'
@@ -15,12 +15,13 @@ steps:
         . /workspace/venv/bin/activate
         pip install --upgrade pip
         pip install -r requirements.txt
+        pip install black flake8 pytest # <--- ADDED: Install dev tools
 
   # Step 2: Lint with Black
-  # All subsequent steps also need to run inside the 'backend' directory.
+  # This step will now find the 'black' command because it was installed in the previous step.
   - name: 'python:3.11-slim'
     id: 'Lint with Black'
-    dir: 'backend' # <--- ADDED
+    dir: 'backend'
     entrypoint: 'bash'
     args:
       - '-c'
@@ -31,7 +32,7 @@ steps:
   # Step 3: Lint with Flake8
   - name: 'python:3.11-slim'
     id: 'Lint with Flake8'
-    dir: 'backend' # <--- ADDED
+    dir: 'backend'
     entrypoint: 'bash'
     args:
       - '-c'
@@ -42,7 +43,7 @@ steps:
   # Step 4: Run Unit & Integration Tests with Pytest
   - name: 'python:3.11-slim'
     id: 'Run Tests'
-    dir: 'backend' # <--- ADDED
+    dir: 'backend'
     entrypoint: 'bash'
     args:
       - '-c'
@@ -51,10 +52,9 @@ steps:
         pytest
 
   # Step 5: Build the Docker Image
-  # This step also runs in the 'backend' directory where the Dockerfile is located.
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Build Docker Image'
-    dir: 'backend' # <--- ADDED
+    dir: 'backend'
     args:
       - 'build'
       - '-t'
@@ -62,7 +62,6 @@ steps:
       - '.'
 
   # Step 6: Push the Docker Image to Artifact Registry
-  # Note: This step does NOT need the dir, as it just pushes an image that's already been built.
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Push Docker Image'
     args:
@@ -70,15 +69,12 @@ steps:
       - '${_GCP_REGION}-docker.pkg.dev/${_GCP_PROJECT}/${_ARTIFACT_REPO}/flux-api:$SHORT_SHA'
 
 # This specifies the final image that was built and pushed.
-# This can be used by other parts of the GCP ecosystem.
 images:
   - '${_GCP_REGION}-docker.pkg.dev/${_GCP_PROJECT}/${_ARTIFACT_REPO}/flux-api:$SHORT_SHA'
 
-# Increase the default timeout to 15 minutes to allow for dependency installation and tests.
+# Increase the default timeout to 15 minutes.
 timeout: '900s'
 
 # Define build-wide options.
 options:
-  # Set the logging mode to only use Cloud Logging. This resolves the trigger error
-  # when a specific service account is used.
   logging: CLOUD_LOGGING_ONLY
