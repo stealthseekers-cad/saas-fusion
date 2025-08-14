@@ -3,9 +3,9 @@ steps:
   args:
   - 'build'
   - '-t'
-  - 'us-west3-docker.pkg.dev/ai-architect-saas/my-api-service/api:latest'
+  - 'us-central1-docker.pkg.dev/ai-architect-saas/my-api-service/api:latest'
   - './backend'
 images:
-- 'us-west3-docker.pkg.dev/ai-architect-saas/my-api-service/api:latest'
+- 'us-central1-docker.pkg.dev/ai-architect-saas/my-api-service/api:latest'
 options:
   logging: CLOUD_LOGGING_ONLY
