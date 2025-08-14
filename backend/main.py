@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 import models
 from database import SessionLocal, engine
 
+
 # This lifespan function will run on application startup.
 # This is the correct place to create the database tables.
 @asynccontextmanager
@@ -19,21 +20,25 @@ async def lifespan(app: FastAPI):
     yield
     print("Application shutdown...")
 
+
 # --- Configuration ---
 try:
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel("gemini-1.5-flash")
 except KeyError:
     model = None
+
 
 # --- Data Models ---
 class Problem(BaseModel):
     text: str
 
+
 class AnalysisReport(BaseModel):
     diagnostic_question: str
     root_cause_analysis: str
     foresight_prediction: str
+
 
 # --- FastAPI App ---
 # We pass the lifespan function to the FastAPI app here.
@@ -48,6 +53,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # --- Dependency ---
 def get_db():
     db = SessionLocal()
@@ -56,15 +62,19 @@ def get_db():
     finally:
         db.close()
 
+
 # --- API Endpoints ---
 @app.get("/")
 def read_root():
     return {"Hello": "Stealth Seekers Foresight Engine is Online"}
 
+
 @app.post("/analyze", response_model=AnalysisReport)
 async def analyze_problem(problem: Problem, db: Session = Depends(get_db)):
     if not model:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured on the server.")
+        raise HTTPException(
+            status_code=500, detail="GEMINI_API_KEY not configured on the server."
+        )
 
     try:
         # --- PROMPT CHAIN ---
@@ -79,7 +89,7 @@ async def analyze_problem(problem: Problem, db: Session = Depends(get_db)):
         prompt3 = f"A client's problem is '{problem.text}'... predict one significant, negative business outcome..."
         foresight_response = model.generate_content(prompt3)
         foresight_prediction = foresight_response.text.strip()
-        
+
         # --- SAVE TO DATABASE ---
         db_report = models.Report(
             client_problem=problem.text,
@@ -99,5 +109,9 @@ async def analyze_problem(problem: Problem, db: Session = Depends(get_db)):
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        raise HTTPException(status_code=500, detail=f"An error occurred during AI analysis: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"An error occurred during AI analysis: {str(e)}"
+        )
+
+
 # Test commit for Cloud Build trigger
