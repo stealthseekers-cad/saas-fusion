@@ -81,3 +81,9 @@ images:
 
 # Increase the default timeout to 15 minutes to allow for dependency installation and tests.
 timeout: '900s'
+
+# Define build-wide options.
+options:
+  # Set the logging mode to only use Cloud Logging. This resolves the trigger error
+  # when a specific service account is used.
+  logging: CLOUD_LOGGING_ONLY
