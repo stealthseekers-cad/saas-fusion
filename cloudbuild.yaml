@@ -3,10 +3,10 @@
 
 steps:
   # Step 1: Install Python dependencies
-  # We use a standard Python image to create a virtual environment and install our packages.
-  # This caches the dependencies for subsequent steps.
+  # We specify `dir: 'backend'` to run this command inside the backend subdirectory.
   - name: 'python:3.11-slim'
     id: 'Install Dependencies'
+    dir: 'backend' # <--- ADDED: Change working directory
     entrypoint: 'bash'
     args:
       - '-c'
@@ -17,10 +17,10 @@ steps:
         pip install -r requirements.txt
 
   # Step 2: Lint with Black
-  # Run the Black code formatter in check mode. If any file needs reformatting,
-  # this step will fail the build, enforcing a consistent code style.
+  # All subsequent steps also need to run inside the 'backend' directory.
   - name: 'python:3.11-slim'
     id: 'Lint with Black'
+    dir: 'backend' # <--- ADDED
     entrypoint: 'bash'
     args:
       - '-c'
@@ -29,10 +29,9 @@ steps:
         black . --check
 
   # Step 3: Lint with Flake8
-  # Run Flake8 to check for style guide violations (PEP 8) and other common errors.
-  # This step will also fail the build if issues are found.
   - name: 'python:3.11-slim'
     id: 'Lint with Flake8'
+    dir: 'backend' # <--- ADDED
     entrypoint: 'bash'
     args:
       - '-c'
@@ -41,10 +40,9 @@ steps:
         flake8 .
 
   # Step 4: Run Unit & Integration Tests with Pytest
-  # Execute our test suite. A failing test is a critical error, so this will
-  # immediately stop the build. This is our primary quality gate.
   - name: 'python:3.11-slim'
     id: 'Run Tests'
+    dir: 'backend' # <--- ADDED
     entrypoint: 'bash'
     args:
       - '-c'
@@ -53,12 +51,10 @@ steps:
         pytest
 
   # Step 5: Build the Docker Image
-  # If all previous steps passed, we build our application container.
-  # The image will be tagged with the short git commit SHA for versioning.
-  # $_GCP_PROJECT, $_GCP_REGION, and $_ARTIFACT_REPO are substitution variables
-  # that we will configure in the Cloud Build trigger.
+  # This step also runs in the 'backend' directory where the Dockerfile is located.
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Build Docker Image'
+    dir: 'backend' # <--- ADDED
     args:
       - 'build'
       - '-t'
@@ -66,8 +62,7 @@ steps:
       - '.'
 
   # Step 6: Push the Docker Image to Artifact Registry
-  # The validated, tested, and built image is pushed to our private registry.
-  # This image is now the immutable artifact we will use for deployment.
+  # Note: This step does NOT need the dir, as it just pushes an image that's already been built.
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Push Docker Image'
     args:
