@@ -78,15 +78,24 @@ async def analyze_problem(problem: Problem, db: Session = Depends(get_db)):
 
     try:
         # --- PROMPT CHAIN ---
-        prompt1 = f"You are a world-class business consultant... Client's problem: '{problem.text}'"
+        prompt1 = (
+            "You are a world-class business consultant... "
+            f"Client's problem: '{problem.text}'"
+        )
         diagnostic_response = model.generate_content(prompt1)
         diagnostic_question = diagnostic_response.text.strip()
 
-        prompt2 = f"A client's problem is '{problem.text}'... Based on this, what are the top 2-3 likely underlying root causes...?"
+        prompt2 = (
+            f"A client's problem is '{problem.text}'... Based on this, what are "
+            "the top 2-3 likely underlying root causes...?"
+        )
         root_cause_response = model.generate_content(prompt2)
         root_cause_analysis = root_cause_response.text.strip()
 
-        prompt3 = f"A client's problem is '{problem.text}'... predict one significant, negative business outcome..."
+        prompt3 = (
+            f"A client's problem is '{problem.text}'... predict one "
+            "significant, negative business outcome..."
+        )
         foresight_response = model.generate_content(prompt3)
         foresight_prediction = foresight_response.text.strip()
 
