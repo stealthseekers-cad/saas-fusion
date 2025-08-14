@@ -13,5 +13,5 @@ COPY --from=builder /wheels /wheels
 COPY --from=builder /app/requirements.txt .
 RUN pip install --no-cache-dir /wheels/*
 COPY . .
-EXPOSE 8080
-CMD ["gunicorn", "--workers", "3", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8080", "main:app"]
+EXPOSE 8000
+CMD ["gunicorn", "--workers", "3", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "main:app"]
