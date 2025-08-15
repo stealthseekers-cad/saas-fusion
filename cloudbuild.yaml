@@ -3,7 +3,7 @@
 
 steps:
   # Step 1: Install Python dependencies
-  # We install both app dependencies from requirements.txt and dev tools like black, flake8, and pytest.
+  # We install both app dependencies from requirements.txt and dev tools.
   - name: 'python:3.11-slim'
     id: 'Install Dependencies'
     dir: 'backend'
@@ -15,10 +15,9 @@ steps:
         . /workspace/venv/bin/activate
         pip install --upgrade pip
         pip install -r requirements.txt
-        pip install black flake8 pytest # <--- ADDED: Install dev tools
+        pip install black flake8 pytest httpx # <--- ADDED: httpx for TestClient
 
   # Step 2: Lint with Black
-  # This step will now find the 'black' command because it was installed in the previous step.
   - name: 'python:3.11-slim'
     id: 'Lint with Black'
     dir: 'backend'
@@ -41,6 +40,7 @@ steps:
         flake8 .
 
   # Step 4: Run Unit & Integration Tests with Pytest
+  # This step will now succeed as httpx is available.
   - name: 'python:3.11-slim'
     id: 'Run Tests'
     dir: 'backend'
