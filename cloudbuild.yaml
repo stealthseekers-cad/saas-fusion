@@ -1,5 +1,5 @@
-# This is the Cloud Build configuration file for our CI (Continuous Integration) pipeline.
-# It defines the steps to lint, test, build, and push our Docker image.
+# This is the Cloud Build configuration file for our full CI/CD pipeline.
+# It defines the steps to lint, test, build, push, and deploy our application.
 
 steps:
   # Step 1: Install Python dependencies
@@ -69,12 +69,32 @@ steps:
       - 'push'
       - '${_GCP_REGION}-docker.pkg.dev/${_GCP_PROJECT}/${_ARTIFACT_REPO}/flux-api:$SHORT_SHA'
 
+  # Step 7: Deploy to Cloud Run
+  # This step uses the gcloud SDK to deploy the container image to Cloud Run.
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Deploy to Cloud Run'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'flux-api' # The name of our Cloud Run service
+      - '--image=${_GCP_REGION}-docker.pkg.dev/${_GCP_PROJECT}/${_ARTIFACT_REPO}/flux-api:$SHORT_SHA'
+      - '--region=${_GCP_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated' # Makes the service publicly accessible
+      - '--project=${_GCP_PROJECT}'
+      # Securely inject the Gemini API key from Secret Manager as an environment variable
+      - '--set-secrets=GEMINI_API_KEY=${_GEMINI_API_KEY_SECRET_NAME}:latest'
+      # Connect the service to our Cloud SQL database instance
+      - '--add-cloudsql-instances=${_CLOUD_SQL_INSTANCE_NAME}'
+
+
 # This specifies the final image that was built and pushed.
 images:
   - '${_GCP_REGION}-docker.pkg.dev/${_GCP_PROJECT}/${_ARTIFACT_REPO}/flux-api:$SHORT_SHA'
 
-# Increase the default timeout to 15 minutes.
-timeout: '900s'
+# Increase the default timeout to 20 minutes to allow for deployment.
+timeout: '1200s'
 
 # Define build-wide options.
 options:
