@@ -15,7 +15,7 @@ steps:
         . /workspace/venv/bin/activate
         pip install --upgrade pip
         pip install -r requirements.txt
-        pip install black flake8 pytest httpx # <--- ADDED: httpx for TestClient
+        pip install black flake8 pytest httpx
 
   # Step 2: Lint with Black
   - name: 'python:3.11-slim'
@@ -40,7 +40,7 @@ steps:
         flake8 .
 
   # Step 4: Run Unit & Integration Tests with Pytest
-  # This step will now succeed as httpx is available.
+  # We set PYTHONPATH=. to ensure pytest can find the 'main' module.
   - name: 'python:3.11-slim'
     id: 'Run Tests'
     dir: 'backend'
@@ -49,6 +49,7 @@ steps:
       - '-c'
       - |
         . /workspace/venv/bin/activate
+        export PYTHONPATH=.
         pytest
 
   # Step 5: Build the Docker Image
