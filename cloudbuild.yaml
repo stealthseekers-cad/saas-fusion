@@ -3,7 +3,7 @@
 
 steps:
   # Step 1: Install Python dependencies
-  # We install both app dependencies from requirements.txt and dev tools.
+  # We upgrade core packaging tools first to mitigate known vulnerabilities.
   - name: 'python:3.11-slim'
     id: 'Install Dependencies'
     dir: 'backend'
@@ -13,7 +13,7 @@ steps:
       - |
         python -m venv /workspace/venv
         . /workspace/venv/bin/activate
-        pip install --upgrade pip
+        pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install black flake8 pytest httpx
 
