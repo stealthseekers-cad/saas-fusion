@@ -4,3 +4,4 @@ google-generativeai
 SQLAlchemy
 psycopg2-binary
 cloud-sql-python-connector[psycopg2]
+pg8000
