@@ -22,5 +22,5 @@ COPY . .
 EXPOSE 8080
 
 # Command to run the application using uvicorn.
-# It uses the  environment variable provided by Cloud Run.
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "$PORT"]
+# This "shell form" of CMD is required to properly substitute the $PORT variable.
+CMD uvicorn main:app --host 0.0.0.0 --port $PORT
