@@ -13,6 +13,7 @@ INSTANCE_CONNECTION_NAME = os.environ.get("INSTANCE_CONNECTION_NAME")
 # Use the Cloud SQL Python Connector to handle the connection
 connector = Connector()
 
+
 def getconn():
     conn = connector.connect(
         INSTANCE_CONNECTION_NAME,
@@ -22,6 +23,7 @@ def getconn():
         db=DB_NAME,
     )
     return conn
+
 
 # Create the SQLAlchemy engine using the connector
 engine = create_engine(
