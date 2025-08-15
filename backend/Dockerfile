@@ -1,14 +1,25 @@
+# Use an official Python runtime as a parent image
 FROM python:3.11-slim
-# Create app directory & user
-RUN useradd -m appuser
-WORKDIR /home/appuser/app
-# Install Python deps
+
+# Set the working directory in the container
+WORKDIR /app
+
+# --- SECURITY HARDENING ---
+# Upgrade core packaging tools to the latest versions to mitigate known vulnerabilities
+# before installing any other dependencies.
+RUN pip install --upgrade pip setuptools wheel
+
+# Copy the requirements file into the container at /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir -r requirements.txt &&     pip install gunicorn
-# Copy source and set ownership
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application's code into the container at /app
 COPY . .
-RUN chown -R appuser:appuser /home/appuser/app
-# Switch to non-root for runtime safety
-USER appuser
-# Gunicorn is now in PATH and we bind to the PORT variable provided by Cloud Run
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "main:app", "--bind", "0.0.0.0:8080"]
+
+# Expose port 80 to the outside world
+EXPOSE 80
+
+# Command to run the application using uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
